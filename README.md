@@ -48,8 +48,9 @@ Encrypted File Bundle (.enc)
 ```bash
 python -m cli.main encrypt file.txt
 
-### Decrypt a file
-```bash
+Decrypt a file
 python -m cli.main decrypt file.txt.enc
+
+
 
 
