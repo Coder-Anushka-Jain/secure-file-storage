@@ -1,11 +1,11 @@
-# Secure File Storage System 🔐
+# Secure File Storage System 
 
 A secure file storage tool that encrypts files using **AES-GCM** and protects encryption keys using **RSA-OAEP**.  
 Designed with real-world cryptographic best practices and a clear threat model.
 
 ---
 
-## 🔒 Features
+## Features
 
 - Hybrid encryption (AES-GCM + RSA-OAEP)
 - Password-protected RSA private key
@@ -15,7 +15,7 @@ Designed with real-world cryptographic best practices and a clear threat model.
 
 ---
 
-## 🧠 Architecture Overview
+## Architecture Overview
 Plain File
 ↓
 AES-GCM Encryption (random key per file)
@@ -28,7 +28,7 @@ Encrypted File Bundle (.enc)
 
 ---
 
-## 🔐 Cryptographic Choices
+## Cryptographic Choices
 
 ### AES-GCM
 - Fast, secure symmetric encryption
@@ -42,11 +42,14 @@ Encrypted File Bundle (.enc)
 
 ---
 
-## 🚀 How to Run
+##  How to Run
 
 ### Encrypt a file
 ```bash
 python -m cli.main encrypt file.txt
+
 ### Decrypt a file
+```bash
 python -m cli.main decrypt file.txt.enc
+
 
