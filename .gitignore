@@ -1,0 +1,14 @@
+# Virtual environment
+venv/
+
+# Keys and secrets
+keys/
+
+# Test / generated files
+*.enc
+test.txt
+test_decrypted.txt
+
+# Python cache
+__pycache__/
+*.pyc
