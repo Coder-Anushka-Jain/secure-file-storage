@@ -4,65 +4,83 @@ import base64
 
 from crypto.aes_utils import generate_aes_key, encrypt_data, decrypt_data
 from crypto.hybrid_utils import encrypt_aes_key, decrypt_aes_key
-
+from cryptography.exceptions import InvalidTag
 
 
 def encrypt_file(input_file: str, output_file: str):
-    """
-    Encrypts a file using hybrid encryption (AES-GCM + RSA).
-    """
-
     input_path = Path(input_file)
     output_path = Path(output_file)
 
-    # 1️⃣ Read file bytes
     plaintext = input_path.read_bytes()
-
-    # 2️⃣ Generate AES session key
     aes_key = generate_aes_key()
 
-    # 3️⃣ Encrypt file using AES-GCM
-    nonce, ciphertext = encrypt_data(plaintext, aes_key)
+    version = 1
 
-    # 4️⃣ Encrypt AES key using RSA public key
+    # 🔐 AAD binds version + filename
+    aad = f"{version}:{input_path.name}".encode()
+
+    nonce, ciphertext = encrypt_data(
+        plaintext,
+        aes_key,
+        aad=aad
+    )
+
     encrypted_aes_key = encrypt_aes_key(aes_key)
 
-    # 5️⃣ Store everything together (Base64 for safe storage)
     encrypted_bundle = {
+        "version": version,
+        "filename": input_path.name,
         "encrypted_key": base64.b64encode(encrypted_aes_key).decode(),
         "nonce": base64.b64encode(nonce).decode(),
         "ciphertext": base64.b64encode(ciphertext).decode()
     }
 
     output_path.write_text(json.dumps(encrypted_bundle))
-
     print(f"[+] File encrypted successfully: {output_file}")
 
 
 
-def decrypt_file(input_file: str, output_file: str):
-    """
-    Decrypts a file encrypted using hybrid encryption.
-    """
 
+
+
+
+def decrypt_file(input_file: str, output_file: str):
     input_path = Path(input_file)
     output_path = Path(output_file)
 
-    # 1️⃣ Load encrypted bundle
-    encrypted_bundle = json.loads(input_path.read_text())
+    try:
+        encrypted_bundle = json.loads(input_path.read_text())
 
-    encrypted_aes_key = base64.b64decode(encrypted_bundle["encrypted_key"])
-    nonce = base64.b64decode(encrypted_bundle["nonce"])
-    ciphertext = base64.b64decode(encrypted_bundle["ciphertext"])
+        version = encrypted_bundle.get("version")
+        if version != 1:
+            raise ValueError("Unsupported encrypted file version")
 
-    # 2️⃣ Decrypt AES key using RSA private key
-    aes_key = decrypt_aes_key(encrypted_aes_key)
+        encrypted_aes_key = base64.b64decode(encrypted_bundle["encrypted_key"])
+        nonce = base64.b64decode(encrypted_bundle["nonce"])
+        ciphertext = base64.b64decode(encrypted_bundle["ciphertext"])
 
-    # 3️⃣ Decrypt file using AES-GCM
-    plaintext = decrypt_data(nonce, ciphertext, aes_key)
+        aad = f"{version}:{encrypted_bundle['filename']}".encode()
 
-    # 4️⃣ Write original file back
-    output_path.write_bytes(plaintext)
+        aes_key = decrypt_aes_key(encrypted_aes_key)
 
-    print(f"[+] File decrypted successfully: {output_file}")
+        plaintext = decrypt_data(
+            nonce,
+            ciphertext,
+            aes_key,
+            aad=aad
+        )
 
+        output_path.write_bytes(plaintext)
+        print(f"[+] File decrypted successfully: {output_file}")
+
+    except InvalidTag:
+        print("Decryption failed: file has been tampered with or wrong password used")
+
+    except KeyError:
+        print("Invalid encrypted file format")
+
+    except ValueError as e:
+        print(f"{str(e)}")
+
+    except Exception:
+        print("Decryption failed due to an unexpected error")

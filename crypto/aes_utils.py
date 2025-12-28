@@ -3,43 +3,35 @@ import os
 
 
 def generate_aes_key() -> bytes:
-    """
-    Generates a secure random 256-bit AES key.
-    """
     return AESGCM.generate_key(bit_length=256)
 
 
-def encrypt_data(plaintext: bytes, key: bytes) -> tuple:
+def encrypt_data(plaintext: bytes, key: bytes, aad: bytes = None) -> tuple:
     """
-    Encrypts data using AES-GCM.
-
-    Returns:
-        nonce, ciphertext, tag
+    Encrypt data using AES-GCM with optional AAD.
     """
     aesgcm = AESGCM(key)
-
-    nonce = os.urandom(12)  # 96-bit nonce (recommended for GCM)
+    nonce = os.urandom(12)  # 96-bit nonce
 
     ciphertext = aesgcm.encrypt(
         nonce=nonce,
         data=plaintext,
-        associated_data=None
+        associated_data=aad
     )
 
     return nonce, ciphertext
 
 
-def decrypt_data(nonce: bytes, ciphertext: bytes, key: bytes) -> bytes:
+def decrypt_data(nonce: bytes, ciphertext: bytes, key: bytes, aad: bytes = None) -> bytes:
     """
-    Decrypts AES-GCM encrypted data.
-    Raises exception if authentication fails.
+    Decrypt AES-GCM encrypted data with optional AAD.
     """
     aesgcm = AESGCM(key)
 
     plaintext = aesgcm.decrypt(
         nonce=nonce,
         data=ciphertext,
-        associated_data=None
+        associated_data=aad
     )
 
     return plaintext
